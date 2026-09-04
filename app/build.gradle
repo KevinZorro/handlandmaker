@@ -86,7 +86,11 @@ dependencies {
     implementation 'com.google.mediapipe:tasks-vision:1.0.0'
 
     // TensorFlow Lite
-    implementation 'org.tensorflow:tensorflow-lite:2.14.0'
+    // 2.17.0 (no 2.14.0): signaco_abecedario_rechazo.tflite exige FULLY_CONNECTED v12,
+    // que el runtime 2.14.0 no registra. Con 2.14.0 el Interpreter no llega a construirse
+    // ("Didn't find op for builtin opcode 'FULLY_CONNECTED' version '12'"), run() se salta
+    // en silencio y la salida queda en ceros -> todo se reporta como "seña no reconocida".
+    implementation 'org.tensorflow:tensorflow-lite:2.17.0'
     implementation 'com.google.code.gson:gson:2.10.1'
 
     // Legacy dependencies to satisfy old resources (not used in spike)
