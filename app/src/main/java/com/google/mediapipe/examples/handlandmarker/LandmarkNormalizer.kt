@@ -11,7 +11,7 @@ object LandmarkNormalizer {
         val z: Float
     )
 
-    fun normalize(result: HandLandmarkerResult): List<NormalizedData>? {
+    fun normalize(result: HandLandmarkerResult): FloatArray? {
         val landmarks = result.landmarks().firstOrNull() ?: return null
         val handedness = result.handedness().firstOrNull()?.firstOrNull()?.categoryName() ?: "Right"
 
@@ -21,28 +21,29 @@ object LandmarkNormalizer {
             Triple(it.x() - wrist.x(), it.y() - wrist.y(), it.z() - wrist.z())
         }
 
-        // 2. Escalado (distancia muñeca 0 a base dedo medio 9)
-        val mcpMiddle = translated[9]
-        val distance = sqrt(
-            mcpMiddle.first * mcpMiddle.first +
-            mcpMiddle.second * mcpMiddle.second +
-            mcpMiddle.third * mcpMiddle.third
-        )
-
-        val scaled = if (distance > 0) {
-            translated.map {
-                Triple(it.first / distance, it.second / distance, it.third / distance)
-            }
-        } else {
-            translated
+        // 2. Calcular la escala como la norma euclidiana MÁXIMA entre todos los puntos
+        var maxNorm = 0.0f
+        translated.forEach { (tx, ty, tz) ->
+            val norm = sqrt(tx * tx + ty * ty + tz * tz)
+            if (norm > maxNorm) maxNorm = norm
         }
 
-        // 3. Espejado si es mano izquierda (eje X)
-        // MediaPipe reporta handedness relativa a la imagen. 
-        // Si queremos unificar todo a "Derecha", invertimos X si es "Left".
-        return scaled.map {
-            val finalX = if (handedness == "Left") -it.first else it.first
-            NormalizedData(finalX, it.second, it.third)
+        // 3. Dividir todos los puntos por esa escala
+        // 4. Si es mano izquierda, espejar en X (* -1)
+        val resultVector = FloatArray(63)
+        translated.forEachIndexed { i, (tx, ty, tz) ->
+            val scaleFactor = if (maxNorm > 0) maxNorm else 1.0f
+            
+            // Si es Left, invertimos X
+            val finalX = if (handedness == "Left") -(tx / scaleFactor) else (tx / scaleFactor)
+            val finalY = ty / scaleFactor
+            val finalZ = tz / scaleFactor
+
+            resultVector[i * 3] = finalX
+            resultVector[i * 3 + 1] = finalY
+            resultVector[i * 3 + 2] = finalZ
         }
+
+        return resultVector
     }
 }

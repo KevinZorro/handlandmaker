@@ -17,6 +17,7 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'de.undercouch.download'
+    id 'org.jetbrains.kotlin.plugin.compose'
 }
 
 android {
@@ -49,8 +50,8 @@ android {
     buildFeatures {
         compose true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion '1.5.1'
+    androidResources {
+        noCompress 'tflite'
     }
 }
 
@@ -83,6 +84,10 @@ dependencies {
 
     // MediaPipe Library
     implementation 'com.google.mediapipe:tasks-vision:1.0.0'
+
+    // TensorFlow Lite
+    implementation 'org.tensorflow:tensorflow-lite:2.14.0'
+    implementation 'com.google.code.gson:gson:2.10.1'
 
     // Legacy dependencies to satisfy old resources (not used in spike)
     implementation 'androidx.appcompat:appcompat:1.6.1'
