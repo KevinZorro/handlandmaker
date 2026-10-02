@@ -1,0 +1,125 @@
+{
+  "etiquetas": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "NN",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y",
+    "Z",
+    "1",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "no_es_seña"
+  ],
+  "indice_rechazo": 35,
+  "modelo": "signaco_modelo_final.tflite",
+  "tamano_mb": 0.2081,
+  "paridad_tflite": {
+    "muestras": 500,
+    "diferencia_maxima": 8.940696716308594e-07,
+    "coincide_argmax_pct": 100.0,
+    "forma_entrada": [
+      1,
+      63
+    ],
+    "forma_salida": [
+      1,
+      36
+    ]
+  },
+  "cuantizado": false,
+  "chequeo_rechazo_cv": {
+    "tomas": 2438,
+    "por_umbral": [
+      {
+        "umbral": 0.0,
+        "falso_rechazo": 0.015586546349466776,
+        "falsa_aceptacion": 0.057727272727272724,
+        "top1_con_rechazo": 0.8589007383100903
+      },
+      {
+        "umbral": 0.5,
+        "falso_rechazo": 0.14602132895816242,
+        "falsa_aceptacion": 0.03636363636363636,
+        "top1_con_rechazo": 0.7871205906480722
+      },
+      {
+        "umbral": 0.6,
+        "falso_rechazo": 0.26251025430680885,
+        "falsa_aceptacion": 0.02181818181818182,
+        "top1_con_rechazo": 0.6985233798195242
+      },
+      {
+        "umbral": 0.7,
+        "falso_rechazo": 0.3642329778506973,
+        "falsa_aceptacion": 0.012272727272727272,
+        "top1_con_rechazo": 0.6164889253486464
+      },
+      {
+        "umbral": 0.8,
+        "falso_rechazo": 0.47087776866283837,
+        "falsa_aceptacion": 0.008181818181818182,
+        "top1_con_rechazo": 0.5172272354388844
+      },
+      {
+        "umbral": 0.9,
+        "falso_rechazo": 0.5869565217391305,
+        "falsa_aceptacion": 0.003181818181818182,
+        "top1_con_rechazo": 0.41017227235438886
+      }
+    ],
+    "falsa_aceptacion_por_clase_negativa": {
+      "dislike": 0.04,
+      "no_gesture_v2": 0.0615,
+      "peace_inverted": 0.02,
+      "stop_inverted": 0.02,
+      "two_up_inverted": 0.0
+    }
+  },
+  "negativos_excluidos": [
+    "one",
+    "palm",
+    "three2",
+    "two_up",
+    "no_gesture"
+  ],
+  "verificado_con_camara": false,
+  "advertencia": "Modelo entrenado con TODOS los participantes: no tiene held-out propio. Las cifras de chequeo_rechazo_cv vienen de validación cruzada. Sin probar con cámara y sin umbrales calibrados (modo objetivo); la decisión es el argmax de 38 clases.",
+  "reproducibilidad": {
+    "semilla": 42,
+    "tensorflow": "2.20.0",
+    "datos_sha256": {
+      "landmarks": "839f7d3737cfc118",
+      "negativos": {
+        "negativos_reposo.npz": "cf2f8a2d2b5b2c0a",
+        "negativos_no_gesture_v2.npz": "e28b365ae2c36302"
+      }
+    }
+  }
+}

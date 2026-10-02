@@ -34,8 +34,7 @@ import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarker
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-// Lista de clases editable: Abecedario A-Z + NN (No seña)
-val SIGN_CLASSES = ('A'..'Z').map { it.toString() } + "NN"
+private const val TAG = "SignaCO"
 
 sealed class AppState {
     object Setup : AppState()
@@ -65,18 +64,40 @@ fun MainScreen() {
 
     var appState by remember { mutableStateOf<AppState>(AppState.Setup) }
 
+    // The config is the single source of the sign vocabulary: the selector, the dataset `clase`
+    // column and the model outputs must all use the same labels.
+    val specLoad = remember {
+        runCatching { ModelSpec.load(context) }.onFailure { Log.e(TAG, "Config del modelo inválido", it) }
+    }
+    val spec = specLoad.getOrElse { error ->
+        ModelErrorScreen(error)
+        return
+    }
+
     if (!hasCameraPermission) {
         PermissionDeniedScreen { launcher.launch(Manifest.permission.CAMERA) }
     } else {
         when (val state = appState) {
-            is AppState.Setup -> SetupScreen(onStart = { id, cond, initialIndex ->
+            is AppState.Setup -> SetupScreen(signClasses = spec.signLabels, onStart = { id, cond, initialIndex ->
                 appState = AppState.Recording(id, cond, initialIndex)
             })
             is AppState.Recording -> RecordingScreen(
                 state = state,
+                spec = spec,
                 onBackToSetup = { appState = AppState.Setup },
                 onUpdateState = { newState -> appState = newState }
             )
+        }
+    }
+}
+
+@Composable
+fun ModelErrorScreen(error: Throwable, onBack: (() -> Unit)? = null) {
+    Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Text("El modelo no se puede usar", style = MaterialTheme.typography.titleLarge, color = Color.Red)
+            Text(error.message ?: error.javaClass.simpleName)
+            if (onBack != null) Button(onClick = onBack) { Text("Volver") }
         }
     }
 }
@@ -93,7 +114,7 @@ fun PermissionDeniedScreen(onRetry: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SetupScreen(onStart: (String, String, Int) -> Unit) {
+fun SetupScreen(signClasses: List<String>, onStart: (String, String, Int) -> Unit) {
     var id by remember { mutableStateOf("") }
     var condition by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
@@ -118,7 +139,7 @@ fun SetupScreen(onStart: (String, String, Int) -> Unit) {
                 onExpandedChange = { expanded = !expanded }
             ) {
                 OutlinedTextField(
-                    value = SIGN_CLASSES[selectedIndex],
+                    value = signClasses[selectedIndex],
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Letra inicial") },
@@ -129,7 +150,7 @@ fun SetupScreen(onStart: (String, String, Int) -> Unit) {
                     expanded = expanded,
                     onDismissRequest = { expanded = false }
                 ) {
-                    SIGN_CLASSES.forEachIndexed { index, label ->
+                    signClasses.forEachIndexed { index, label ->
                         DropdownMenuItem(
                             text = { Text(label) },
                             onClick = {
@@ -156,6 +177,7 @@ fun SetupScreen(onStart: (String, String, Int) -> Unit) {
 @Composable
 fun RecordingScreen(
     state: AppState.Recording,
+    spec: ModelSpec,
     onBackToSetup: () -> Unit,
     onUpdateState: (AppState.Recording) -> Unit
 ) {
@@ -165,7 +187,14 @@ fun RecordingScreen(
     val logger = remember { SessionLogger(context) }
     
     // Clasificador TFLite
-    val classifier = remember { SignaClassifier(context, k = 3) }
+    val classifierLoad = remember {
+        runCatching { SignaClassifier(context, spec, k = 3) }.onFailure { Log.e(TAG, "No se pudo iniciar el clasificador", it) }
+    }
+    val classifier = classifierLoad.getOrElse { error ->
+        ModelErrorScreen(error, onBack = onBackToSetup)
+        return
+    }
+    val signClasses = spec.signLabels
     
     var isRecording by remember { mutableStateOf(false) }
     var samplesInTake by remember { mutableIntStateOf(0) }
@@ -180,13 +209,13 @@ fun RecordingScreen(
     var testModeEnabled by remember { mutableStateOf(true) }
     var lastProcessedLandmarks by remember { mutableStateOf<FloatArray?>(null) }
     
-    val currentClassName = SIGN_CLASSES[state.currentClassIndex]
+    val currentClassName = signClasses[state.currentClassIndex]
     var takeNumber by remember { mutableIntStateOf(1) }
     var menuExpanded by remember { mutableStateOf(false) }
 
     val helper = remember {
         HandLandmarkerHelper(context, object : HandLandmarkerHelper.LandmarkerListener {
-            override fun onError(error: String) { Log.e("SignaCO", error) }
+            override fun onError(error: String) { Log.e(TAG, error) }
             override fun onResults(resultBundle: HandLandmarkerHelper.ResultBundle) {
                 currentResultBundle = resultBundle
                 val handVisible = resultBundle.results.firstOrNull()?.landmarks()?.isNotEmpty() == true
@@ -206,10 +235,10 @@ fun RecordingScreen(
                         }
                         
                         // Lógica de contador de aciertos/fallos en modo test
-                        if (testModeEnabled && prediction.label != "estabilizando...") {
+                        if (testModeEnabled && prediction.label != SignaClassifier.STABILIZING) {
                             if (prediction.label == currentClassName) {
                                 hits++
-                            } else if (prediction.label != "seña no reconocida") {
+                            } else if (prediction.label != SignaClassifier.NOT_RECOGNIZED) {
                                 misses++
                             }
                         }
@@ -243,7 +272,7 @@ fun RecordingScreen(
                             Text("Gesto: $currentClassName", style = MaterialTheme.typography.titleLarge)
                         }
                         DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                            SIGN_CLASSES.forEachIndexed { index, label ->
+                            signClasses.forEachIndexed { index, label ->
                                 DropdownMenuItem(
                                     text = { Text(label) },
                                     onClick = {
@@ -410,7 +439,7 @@ fun RecordingScreen(
                         // Next class
                         IconButton(
                             onClick = {
-                                if (state.currentClassIndex < SIGN_CLASSES.size - 1) {
+                                if (state.currentClassIndex < signClasses.size - 1) {
                                     onUpdateState(state.copy(currentClassIndex = state.currentClassIndex + 1))
                                     takeNumber = 1
                                     samplesInTake = 0
