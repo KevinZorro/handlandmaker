@@ -1,5 +1,7 @@
 package com.google.mediapipe.examples.handlandmarker
 
+import kotlin.math.roundToInt
+
 /** One frame of classifier output, reduced to what the kiosk needs to decide what to show. */
 sealed interface FrameReading {
     /** The last `k` frames agree on a sign. */
@@ -38,7 +40,15 @@ data class RecognitionUiState(
     val confidence: Float = 0f,
     val signShownAtMs: Long = 0L,
     val lastHandAtMs: Long = 0L,
-)
+) {
+    /** [confidence] as a whole percentage, capped at 99: a softmax score is never certainty. */
+    val confidencePercent: Int
+        get() = (confidence.coerceIn(0f, 1f) * 100).roundToInt().coerceAtMost(MAX_SHOWN_PERCENT)
+
+    private companion object {
+        const val MAX_SHOWN_PERCENT = 99
+    }
+}
 
 object RecognitionReducer {
     /** After the hand leaves, the last sign stays this long so the people in line can read it. */

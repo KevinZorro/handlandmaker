@@ -16,7 +16,8 @@ opens straight into the camera, no setup or recording (the lab recording mode wa
 - `MainScreen.kt`: permission, camera and kiosk wiring. `MainActivity.kt`: keep-screen-on, hidden system bars.
 - `RecognitionUi.kt`: pure state for what the kiosk shows (sign hold, linger, `NN` shown as `Ñ`).
 - `HandOverlay.kt` / `FillCenterMapping.kt`: skeleton and focus corners mapped through the preview's FILL_CENTER crop.
-- `ResultCard.kt`: bottom glass card (sign, status, confidence bar) and the kiosk palette.
+- `ResultCard.kt`: bottom glass card (sign, status, confidence bar and %) and the kiosk palette.
+- `KioskHeader.kt`: top pill with the app name (`app_name`) and a one-line description.
 
 ## Gotchas
 - Model and config are a pair: see `docs/model.md` before swapping either.

@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -32,7 +33,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,6 +55,7 @@ private val GLYPH_SLOT = 140.dp
 private val GLYPH_SIZE = 128.sp
 private val TWO_CHAR_GLYPH_SIZE = 96.sp   // "10" must fit the same slot
 private const val DIMMED_ALPHA = .38f
+private val PERCENT_WIDTH = 46.dp   // fits "99 %" at 15 sp
 
 /** Bottom card: the recognized sign, a short status line and the live confidence bar. */
 @Composable
@@ -87,7 +91,7 @@ fun ResultCard(state: RecognitionUiState, modifier: Modifier = Modifier) {
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            ConfidenceBar(state.confidence, isConfirmed = state.isHandVisible && state.isSignCurrent)
+            ConfidenceMeter(state, isConfirmed = state.isHandVisible && state.isSignCurrent)
         }
     }
 }
@@ -95,7 +99,7 @@ fun ResultCard(state: RecognitionUiState, modifier: Modifier = Modifier) {
 private fun caption(state: RecognitionUiState): String = when {
     state.sign != null -> state.sign.kind.caption
     state.isHandVisible -> "LEYENDO TU MANO"
-    else -> "LENGUA DE SEÑAS"
+    else -> "TU TURNO"
 }
 
 // Every message fits two lines of the ~160 dp text column of a typical phone.
@@ -151,13 +155,30 @@ private fun IdleMark(modifier: Modifier) {
     }
 }
 
+/** Live confidence: a bar plus its percentage. The number is hidden, not removed, without a hand, so nothing shifts. */
 @Composable
-private fun ConfidenceBar(confidence: Float, isConfirmed: Boolean) {
-    val fill by animateFloatAsState(confidence.coerceIn(0f, 1f), tween(90, easing = LinearEasing), label = "confidence")
+private fun ConfidenceMeter(state: RecognitionUiState, isConfirmed: Boolean) {
+    val fill by animateFloatAsState(state.confidence.coerceIn(0f, 1f), tween(90, easing = LinearEasing), label = "confidence")
     val color by animateColorAsState(if (isConfirmed) KioskColors.Confirmed else Color.White, tween(120), label = "confidenceColor")
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        ConfidenceBar(fill, color, Modifier.weight(1f))
+        Text(
+            text = "${state.confidencePercent} %",
+            color = if (state.isHandVisible) Color.White else Color.Transparent,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.SemiBold,
+            style = TextStyle(fontFeatureSettings = "tnum"),   // fixed-width digits: the number does not jitter
+            textAlign = TextAlign.End,
+            maxLines = 1,
+            modifier = Modifier.width(PERCENT_WIDTH),
+        )
+    }
+}
+
+@Composable
+private fun ConfidenceBar(fill: Float, color: Color, modifier: Modifier) {
     Box(
-        Modifier
-            .fillMaxWidth()
+        modifier
             .height(10.dp)
             .clip(CircleShape)
             .background(KioskColors.Track)
