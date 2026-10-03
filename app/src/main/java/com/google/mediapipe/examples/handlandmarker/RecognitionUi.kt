@@ -16,14 +16,22 @@ sealed interface FrameReading {
 
 enum class SignKind(val caption: String) { LETTER("LETRA"), NUMBER("NÚMERO") }
 
-data class DisplaySign(val text: String, val kind: SignKind) {
+/** [sameAsNumber] is the digit signed with the same handshape as this letter, if any. */
+data class DisplaySign(val text: String, val kind: SignKind, val sameAsNumber: String? = null) {
+    val caption: String
+        get() = sameAsNumber?.let { "${kind.caption} · ${SignKind.NUMBER.caption} $it" } ?: kind.caption
+
     companion object {
         // The dataset spells Ñ as "NN" to avoid encoding issues; visitors should see the real letter.
         private val DISPLAY_TEXT = mapOf("NN" to "Ñ")
 
+        // In LSC, 2 and 3 share the handshape of V and W, so the model has one class for each pair.
+        private val SAME_HANDSHAPE_NUMBER = mapOf("V" to "2", "W" to "3")
+
         fun of(label: String) = DisplaySign(
             text = DISPLAY_TEXT[label] ?: label,
             kind = if (label.isNotEmpty() && label.all(Char::isDigit)) SignKind.NUMBER else SignKind.LETTER,
+            sameAsNumber = SAME_HANDSHAPE_NUMBER[label],
         )
     }
 }

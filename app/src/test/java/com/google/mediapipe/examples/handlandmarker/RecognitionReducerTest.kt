@@ -90,4 +90,13 @@ class RecognitionReducerTest {
         assertEquals(DisplaySign("I", SignKind.LETTER), DisplaySign.of("I"))
         assertEquals(DisplaySign("1", SignKind.NUMBER), DisplaySign.of("1"))
     }
+
+    @Test
+    fun lettersSharingAHandshapeWithADigitNameBoth() {
+        assertEquals(DisplaySign("V", SignKind.LETTER, sameAsNumber = "2"), DisplaySign.of("V"))
+        assertEquals("LETRA · NÚMERO 2", DisplaySign.of("V").caption)
+        assertEquals("LETRA · NÚMERO 3", DisplaySign.of("W").caption)
+        assertEquals("LETRA", DisplaySign.of("A").caption)
+        assertEquals("NÚMERO", DisplaySign.of("10").caption)
+    }
 }
