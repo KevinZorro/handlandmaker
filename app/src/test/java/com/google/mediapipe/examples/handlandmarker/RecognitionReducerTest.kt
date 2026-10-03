@@ -75,6 +75,15 @@ class RecognitionReducerTest {
     }
 
     @Test
+    fun confidenceIsShownAsAWholePercentageBelowCertainty() {
+        assertEquals(97, RecognitionUiState(confidence = .9712f).confidencePercent)
+        assertEquals(0, RecognitionUiState(confidence = 0f).confidencePercent)
+        assertEquals(99, RecognitionUiState(confidence = .9999f).confidencePercent)
+        assertEquals(99, RecognitionUiState(confidence = 1.2f).confidencePercent)
+        assertEquals(0, RecognitionUiState(confidence = -.1f).confidencePercent)
+    }
+
+    @Test
     fun displayMapsModelLabelsForVisitors() {
         assertEquals(DisplaySign("Ñ", SignKind.LETTER), DisplaySign.of("NN"))
         assertEquals(DisplaySign("10", SignKind.NUMBER), DisplaySign.of("10"))
