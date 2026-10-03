@@ -24,9 +24,8 @@ on-screen error instead of degrading to "seña no reconocida":
 - The model output size equals `len(etiquetas)` and the input is `[1, 63]`.
 - `umbral_por_letra` (optional) only names signs the model outputs.
 
-The sign selector and the recorded CSV `clase` column come from the same `etiquetas`, so recorded
-data always uses the model's vocabulary. A permutation of labels with the same count **cannot**
-be detected this way; `ModelSpecTest.shippedConfigMatchesTheBundledModelContract` pins the
+The kiosk shows the labels from `etiquetas` as-is, except `NN`, which it displays as `Ñ`
+(`RecognitionUi.kt`). A permutation of labels with the same count **cannot** be detected this way; `ModelSpecTest.shippedConfigMatchesTheBundledModelContract` pins the
 expected order of the shipped config.
 
 ## Decision rule
