@@ -51,8 +51,17 @@ jobs:
 
       - name: Build signed release APK
         run: |
+          # Secrets set from a file (gh secret set < file) keep its trailing newline, which breaks the password.
+          for name in SIGNING_STORE_PASSWORD SIGNING_KEY_PASSWORD SIGNING_KEY_ALIAS; do
+            export "$name=$(printf '%s' "${!name}" | tr -d '\r\n')"
+          done
           export SIGNING_STORE_FILE="$RUNNER_TEMP/release.jks"
           echo "$SIGNING_KEYSTORE_BASE64" | base64 --decode > "$SIGNING_STORE_FILE"
+          if ! keytool -list -keystore "$SIGNING_STORE_FILE" -storepass:env SIGNING_STORE_PASSWORD \
+               -alias "$SIGNING_KEY_ALIAS" > /dev/null; then
+            echo "::error::SIGNING_STORE_PASSWORD does not open the keystore, or it has no key SIGNING_KEY_ALIAS"
+            exit 1
+          fi
           bash ./gradlew :app:assembleRelease -PversionCode="$GITHUB_RUN_NUMBER"
 
       - name: Upload to Firebase App Distribution
