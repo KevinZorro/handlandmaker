@@ -1,0 +1,71 @@
+# Builds a signed release APK and sends it to the testers in Firebase App Distribution.
+# Setup (Firebase project, secrets, keystore): docs/distribution.md
+name: Distribute to testers
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      release_notes:
+        description: What testers should try in this build
+        required: false
+
+concurrency:
+  group: distribute
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  distribute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      SIGNING_KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+      SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+      SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+      SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+      TESTER_GROUPS: ${{ vars.FIREBASE_TESTER_GROUPS || 'equipo' }}
+    steps:
+      - name: Check secrets
+        run: |
+          missing=0
+          for name in FIREBASE_APP_ID FIREBASE_SERVICE_ACCOUNT SIGNING_KEYSTORE_BASE64 \
+                      SIGNING_STORE_PASSWORD SIGNING_KEY_ALIAS SIGNING_KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then echo "::error::Missing repository secret $name (see docs/distribution.md)"; missing=1; fi
+          done
+          exit "$missing"
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build signed release APK
+        run: |
+          export SIGNING_STORE_FILE="$RUNNER_TEMP/release.jks"
+          echo "$SIGNING_KEYSTORE_BASE64" | base64 --decode > "$SIGNING_STORE_FILE"
+          bash ./gradlew :app:assembleRelease -PversionCode="$GITHUB_RUN_NUMBER"
+
+      - name: Upload to Firebase App Distribution
+        env:
+          DISPATCH_NOTES: ${{ github.event.inputs.release_notes }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json"
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$GOOGLE_APPLICATION_CREDENTIALS"
+          notes="${DISPATCH_NOTES:-$COMMIT_MESSAGE}"
+          printf 'Build %s (%s)\n\n%s\n' "$GITHUB_RUN_NUMBER" "${GITHUB_SHA::7}" "$notes" > "$RUNNER_TEMP/notes.txt"
+          npx --yes firebase-tools@15.32.1 appdistribution:distribute \
+            app/build/outputs/apk/release/app-release.apk \
+            --app "$FIREBASE_APP_ID" \
+            --groups "$TESTER_GROUPS" \
+            --release-notes-file "$RUNNER_TEMP/notes.txt"
