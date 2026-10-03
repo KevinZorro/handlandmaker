@@ -33,6 +33,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -75,6 +76,7 @@ fun ResultCard(state: RecognitionUiState, modifier: Modifier = Modifier) {
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 1.4.sp,
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
             Text(
                 text = message(state),
@@ -83,6 +85,7 @@ fun ResultCard(state: RecognitionUiState, modifier: Modifier = Modifier) {
                 lineHeight = 24.sp,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
             )
             ConfidenceBar(state.confidence, isConfirmed = state.isHandVisible && state.isSignCurrent)
         }
@@ -92,12 +95,13 @@ fun ResultCard(state: RecognitionUiState, modifier: Modifier = Modifier) {
 private fun caption(state: RecognitionUiState): String = when {
     state.sign != null -> state.sign.kind.caption
     state.isHandVisible -> "LEYENDO TU MANO"
-    else -> "LENGUA DE SEÑAS COLOMBIANA"
+    else -> "LENGUA DE SEÑAS"
 }
 
+// Every message fits two lines of the ~160 dp text column of a typical phone.
 private fun message(state: RecognitionUiState): String = when {
     state.sign == null && state.isHandVisible -> "Forma una letra o un número"
-    state.sign == null -> "Muestra tu mano y haz una letra o un número"
+    state.sign == null -> "Muestra tu mano a la cámara"
     state.isSignCurrent -> "Reconocida"
     state.isHandVisible -> "Sigue intentando"
     else -> "Última seña reconocida"
