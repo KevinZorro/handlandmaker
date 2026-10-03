@@ -7,6 +7,7 @@ opens straight into the camera, no setup or recording (the lab recording mode wa
 ## Commands
 - Unit tests (JVM): `./gradlew :app:testDebugUnitTest`
 - Build/install: `./gradlew :app:installDebug` (physical device; needs the camera)
+- Test builds: pushing to `master` sends a signed APK to the team via Firebase App Distribution (`docs/distribution.md`).
 - Classifier debug log: `adb logcat -s SignaCO_Debug` (off by default; enable the `VERBOSE` flags in `MainActivity`)
 
 ## Layout (`app/src/main/java/com/google/mediapipe/examples/handlandmarker/`)
