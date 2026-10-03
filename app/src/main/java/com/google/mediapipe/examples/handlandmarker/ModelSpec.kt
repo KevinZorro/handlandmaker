@@ -23,7 +23,7 @@ data class ModelSpec(
     val thresholds: Map<String, Float>,
     val globalThreshold: Float,
 ) {
-    /** Signs a user can perform, in model order. This is also the dataset `clase` vocabulary. */
+    /** Signs a user can perform, in model order (rejection class excluded). */
     val signLabels: List<String> get() = labels.filterIndexed { index, _ -> index != rejectionIndex }
 
     fun thresholdFor(label: String): Float = thresholds[label] ?: globalThreshold

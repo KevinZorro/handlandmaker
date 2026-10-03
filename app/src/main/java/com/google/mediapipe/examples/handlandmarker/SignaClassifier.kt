@@ -25,7 +25,9 @@ class SignaClassifier(context: Context, private val spec: ModelSpec, private val
         val label: String,
         val confidence: Float,
         val isRecognized: Boolean,
-        val inferenceTime: Long
+        val inferenceTime: Long,
+        /** This frame's argmax is a sign rather than the rejection class, so [confidence] belongs to a sign. */
+        val isTopSign: Boolean,
     )
 
     init {
@@ -113,7 +115,8 @@ class SignaClassifier(context: Context, private val spec: ModelSpec, private val
             label = smoothedLabel,
             confidence = maxProb,
             isRecognized = isRecognized && smoothedLabel != STABILIZING,
-            inferenceTime = inferenceTime
+            inferenceTime = inferenceTime,
+            isTopSign = maxIndex != spec.rejectionIndex,
         )
     }
 

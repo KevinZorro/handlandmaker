@@ -16,25 +16,37 @@
 package com.google.mediapipe.examples.handlandmarker
 
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.ui.Modifier
+import androidx.compose.material3.darkColorScheme
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enterKioskMode()
+        // Per-frame Logcat dumps take CPU the live demo needs; set to true when debugging the model.
+        SignaClassifier.VERBOSE = false
+        LandmarkNormalizer.VERBOSE = false
         setContent {
-            MaterialTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    MainScreen()
-                }
+            MaterialTheme(colorScheme = darkColorScheme()) {
+                MainScreen()
             }
+        }
+    }
+
+    // Visitors sign at the camera without touching the phone, so the screen must never time out,
+    // and the system bars only compete with the camera.
+    private fun enterKioskMode() {
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            hide(WindowInsetsCompat.Type.systemBars())
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
     }
 }
