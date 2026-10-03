@@ -97,7 +97,7 @@ fun ResultCard(state: RecognitionUiState, modifier: Modifier = Modifier) {
 }
 
 private fun caption(state: RecognitionUiState): String = when {
-    state.sign != null -> state.sign.kind.caption
+    state.sign != null -> state.sign.caption
     state.isHandVisible -> "LEYENDO TU MANO"
     else -> "TU TURNO"
 }
