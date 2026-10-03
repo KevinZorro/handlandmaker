@@ -25,8 +25,8 @@ data class DisplaySign(val text: String, val kind: SignKind, val sameAsNumber: S
         // The dataset spells Ñ as "NN" to avoid encoding issues; visitors should see the real letter.
         private val DISPLAY_TEXT = mapOf("NN" to "Ñ")
 
-        // In LSC, 2 and 3 share the handshape of V and W, so the model has one class for each pair.
-        private val SAME_HANDSHAPE_NUMBER = mapOf("V" to "2", "W" to "3")
+        // In LSC, 0, 2 and 3 share the handshape of O, V and W, so the model has one class for each pair.
+        private val SAME_HANDSHAPE_NUMBER = mapOf("O" to "0", "V" to "2", "W" to "3")
 
         fun of(label: String) = DisplaySign(
             text = DISPLAY_TEXT[label] ?: label,

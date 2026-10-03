@@ -10,7 +10,7 @@ Current model: **modelo_final_v2** (Drive folder `modelo_final_v2`).
 | Converted with | TensorFlow 2.20.0, seed 42. Loads on the app runtime `tensorflow-lite:2.17.0` |
 | Input | `[1, 63]` float32: 21 MediaPipe hand landmarks × (x, y, z), normalized by `LandmarkNormalizer` |
 | Output | `[1, 36]` softmax: 35 signs + `no_es_seña` (rejection, last index) |
-| Classes | `A`–`Z` with `NN` after `N`, then digits `1 4 5 6 7 8 9 10`. No `2` or `3`: in LSC they share the handshape of `V` and `W` |
+| Classes | `A`–`Z` with `NN` after `N`, then digits `1 4 5 6 7 8 9 10`. No `0`, `2` or `3`: in LSC they share the handshape of `O`, `V` and `W` |
 
 ## Model/config contract
 
@@ -25,8 +25,8 @@ on-screen error instead of degrading to "seña no reconocida":
 - `umbral_por_letra` (optional) only names signs the model outputs.
 
 The kiosk shows the labels from `etiquetas` as-is, except `NN`, which it displays as `Ñ`
-(`RecognitionUi.kt`). For `V` and `W` the caption also names the digit with the same handshape
-(`LETRA · NÚMERO 2` / `3`). A permutation of labels with the same count **cannot** be detected this way; `ModelSpecTest.shippedConfigMatchesTheBundledModelContract` pins the
+(`RecognitionUi.kt`). For `O`, `V` and `W` the caption also names the digit with the same handshape
+(`LETRA · NÚMERO 0` / `2` / `3`). A permutation of labels with the same count **cannot** be detected this way; `ModelSpecTest.shippedConfigMatchesTheBundledModelContract` pins the
 expected order of the shipped config.
 
 ## Decision rule

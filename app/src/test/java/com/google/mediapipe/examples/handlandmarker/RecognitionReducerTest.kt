@@ -96,6 +96,7 @@ class RecognitionReducerTest {
         assertEquals(DisplaySign("V", SignKind.LETTER, sameAsNumber = "2"), DisplaySign.of("V"))
         assertEquals("LETRA · NÚMERO 2", DisplaySign.of("V").caption)
         assertEquals("LETRA · NÚMERO 3", DisplaySign.of("W").caption)
+        assertEquals("LETRA · NÚMERO 0", DisplaySign.of("O").caption)
         assertEquals("LETRA", DisplaySign.of("A").caption)
         assertEquals("NÚMERO", DisplaySign.of("10").caption)
     }
